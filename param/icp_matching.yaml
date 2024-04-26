@@ -1,0 +1,41 @@
+# 位置合わせを実行するクラウドデータ
+source_cloud_topic_name: /source_cloud
+
+# 位置合わせされるクラウドデータ
+target_cloud_topic_name: /target_cloud
+
+# 位置合わせ結果クラウドデータ
+result_cloud_topic_name: /result_cloud
+
+# 補正値の配信トピック名
+correction_info_topic_name: /correction_info
+
+# 位置合わせを実行した結果のクラウドデータ
+cloud_topic_name: /result_cloud
+
+# グローバルフレーム名
+frame_name: map
+
+# ICP結果のフレーム名
+result_cloud_frame_name: map
+
+## 補正後の点群データの配信回数(0以下で配信しない)
+publish_times: 100
+
+# ICP実行オプション
+icp_option:
+
+  ## ICPの最大実行回数(デフォルト10回)
+  maximum_iterations: 100
+
+  ## 2点間の最大距離の許容値
+  max_correspondence_distance: 1.34078e+154
+
+  ## 1つ前の結果との並行成分の差分の許容値
+  transformation_epsilon: 0.0
+
+  ## 1つ前の結果との回転成分の差分の許容値
+  transformation_rotation_epsilon: 0.0
+
+  ## 点群の2乗平均誤差の許容値
+  euclidean_fitness_epsilon: -1.79769e+308

@@ -1,0 +1,64 @@
+<launch>
+    <!-- Arguments -->
+    <arg name="ENTITY_ID" default="megarover_01_sim"/>
+    <arg name="USE_MAP_SERVER" default="true" />
+    <arg name="TARGET_MAP_FILE" default="/home/ros/maps/reference_map.yaml"/>
+	<arg name="TARGET_MAP_TOPIC" default="/reference_map"/>
+    <arg name="TARGET_CLOUD_TOPIC" default="/target_cloud"/>
+    <arg name="SOURCE_MAP_FILE" default="/home/ros/maps/environment_map.yaml"/>
+    <arg name="SOURCE_MAP_TOPIC" default="/environment_map"/>
+    <arg name="SOURCE_CLOUD_TOPIC" default="/source_cloud"/>
+    <arg name="USE_MAP_VIEWER" default="true" />
+    <arg name="USE_CLOUD_VIEWER" default="true" />
+    <arg name="USE_ICP_RESULT_VIEWER" default="true" />
+
+  	<group ns="$(arg ENTITY_ID)">
+	  	<!-- Map server -->
+        <group if="$(arg USE_MAP_SERVER)">
+            <node pkg="map_server" name="map_server_target" type="map_server" args="$(arg TARGET_MAP_FILE)" output="screen">
+                <remap from="map" to="/$(arg ENTITY_ID)$(arg TARGET_MAP_TOPIC)" />
+                <param name="frame_id" value="$(arg ENTITY_ID)/map" />
+            </node>
+
+            <node pkg="map_server" name="map_server_source" type="map_server" args="$(arg SOURCE_MAP_FILE)" output="screen">
+                <remap from="map" to="/$(arg ENTITY_ID)$(arg SOURCE_MAP_TOPIC)" />
+                <param name="frame_id" value="$(arg ENTITY_ID)/map" />
+            </node>
+        </group>
+
+	    <!-- map to cloud -->
+        <node pkg="map_to_pointcloud" name="map_to_cloud_target" type="map_to_pointcloud_node"  output="screen">
+            <rosparam file="$(find map_to_pointcloud)/param/map_to_pointcloud.yaml" command="load" />
+            <param name="global_frame" value="$(arg ENTITY_ID)/map" />
+            <param name="map_topic_name" value="/$(arg ENTITY_ID)$(arg TARGET_MAP_TOPIC)" />
+            <param name="cloud_topic_name" value="/$(arg ENTITY_ID)$(arg TARGET_CLOUD_TOPIC)" />
+        </node>
+        <node pkg="map_to_pointcloud" name="map_to_cloud_source" type="map_to_pointcloud_node"  output="screen">
+            <rosparam file="$(find map_to_pointcloud)/param/map_to_pointcloud.yaml" command="load" />
+            <param name="global_frame" value="$(arg ENTITY_ID)/map" />
+            <param name="map_topic_name" value="/$(arg ENTITY_ID)$(arg SOURCE_MAP_TOPIC)" />
+            <param name="cloud_topic_name" value="/$(arg ENTITY_ID)$(arg SOURCE_CLOUD_TOPIC)" />
+		</node>
+
+		<!-- matching -->
+		<node pkg="icp_matching" name="icp_matching_node" type="icp_matching_node"  output="screen">
+			<rosparam file="$(find icp_matching)/param/icp_matching.yaml" command="load" />
+			<param name="source_cloud_topic_name" value="/$(arg ENTITY_ID)$(arg SOURCE_CLOUD_TOPIC)" />
+			<param name="target_cloud_topic_name" value="/$(arg ENTITY_ID)$(arg TARGET_CLOUD_TOPIC)" />
+			<param name="result_cloud_topic_name" value="/$(arg ENTITY_ID)/result_cloud" />
+			<param name="correction_info_topic_name" value="/$(arg ENTITY_ID)/correction_info" />
+			<param name="result_cloud_frame_name" value="$(arg ENTITY_ID)/map" /> 
+		</node>
+
+		<!-- rviz(視覚化ツール) -->
+		<group if="$(arg USE_MAP_VIEWER)">
+			<node pkg="rviz" type="rviz" args="-d '$(find icp_matching)/rviz/map_view_$(arg ENTITY_ID).rviz'" name="map_view_rviz" respawn="true" />
+		</group>
+        <group if="$(arg USE_CLOUD_VIEWER)">
+            <node pkg="rviz" type="rviz" args="-d '$(find map_to_pointcloud)/rviz/result_cloud_view_$(arg ENTITY_ID).rviz'" name="map_to_cloud_rviz" respawn="true" />
+        </group>
+		<group if="$(arg USE_ICP_RESULT_VIEWER)">
+			<node pkg="rviz" type="rviz" args="-d '$(find icp_matching)/rviz/icp_result_$(arg ENTITY_ID).rviz'" name="icp_result_rviz" respawn="true" />
+		</group>
+  	</group>
+</launch>
